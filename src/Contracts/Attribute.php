@@ -2,8 +2,6 @@
 
 namespace Sofa\Eloquence\Contracts;
 
-use Sofa\Eloquence\Exceptions\InvalidTypeException;
-
 interface Attribute
 {
     /**
@@ -29,18 +27,11 @@ interface Attribute
     public function getKey();
 
     /**
-     * Get the meta attribute group.
-     *
-     * @return string
-     */
-    public function getMetaGroup();
-
-    /**
      * Set value of the meta attribute.
      *
      * @param mixed $value
      *
-     * @throws InvalidTypeException
+     * @throws \Sofa\Eloquence\Exceptions\InvalidTypeException
      */
     public function setValue($value);
 

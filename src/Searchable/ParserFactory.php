@@ -9,7 +9,7 @@ class ParserFactory implements FactoryContract
     /**
      * Create new parser instance.
      *
-     * @param  int $weight
+     * @param  integer $weight
      * @param  string  $wildcard
      * @return \Sofa\Eloquence\Contracts\Searchable\Parser
      */

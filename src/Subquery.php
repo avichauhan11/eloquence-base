@@ -6,15 +6,12 @@ use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 
-/**
- * @mixin QueryBuilder
- */
 class Subquery extends Expression
 {
     /**
      * Query builder instance.
      *
-     * @var QueryBuilder
+     * @var \Illuminate\Database\Query\Builder
      */
     protected $query;
 
@@ -28,7 +25,7 @@ class Subquery extends Expression
     /**
      * Create new subquery instance.
      *
-     * @param QueryBuilder|EloquentBuilder
+     * @param \Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder
      * @param string $alias
      */
     public function __construct($query, $alias = null)
@@ -45,7 +42,7 @@ class Subquery extends Expression
     /**
      * Set underlying query builder.
      *
-     * @param QueryBuilder $query
+     * @param \Illuminate\Database\Query\Builder $query
      */
     public function setQuery(QueryBuilder $query)
     {
@@ -55,7 +52,7 @@ class Subquery extends Expression
     /**
      * Get underlying query builder.
      *
-     * @return QueryBuilder
+     * @return \Illuminate\Database\Query\Builder
      */
     public function getQuery()
     {
@@ -69,12 +66,12 @@ class Subquery extends Expression
      */
     public function getValue()
     {
-        $sql = '(' . $this->query->toSql() . ')';
+        $sql = '('.$this->query->toSql().')';
 
         if ($this->alias) {
             $alias = $this->query->getGrammar()->wrapTable($this->alias);
 
-            $sql .= ' as ' . $alias;
+            $sql .= ' as '.$alias;
         }
 
         return $sql;

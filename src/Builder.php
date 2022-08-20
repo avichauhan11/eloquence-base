@@ -2,10 +2,8 @@
 
 namespace Sofa\Eloquence;
 
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Str;
-use Sofa\Eloquence\Contracts\Relations\Joiner;
 use Sofa\Eloquence\Searchable\Column;
+use Carbon\Carbon;
 use Illuminate\Database\Query\Expression;
 use Sofa\Hookable\Builder as HookableBuilder;
 use Sofa\Eloquence\Searchable\ColumnCollection;
@@ -22,21 +20,21 @@ class Builder extends HookableBuilder
     /**
      * Parser factory instance.
      *
-     * @var ParserFactory
+     * @var \Sofa\Eloquence\Contracts\Searchable\ParserFactory
      */
     protected static $parser;
 
     /**
      * Joiner factory instance.
      *
-     * @var JoinerFactory
+     * @var \Sofa\Eloquence\Contracts\Relations\JoinerFactory
      */
     protected static $joinerFactory;
 
     /**
      * Relations joiner instance.
      *
-     * @var Joiner
+     * @var \Sofa\Eloquence\Contracts\Relations\Joiner
      */
     protected $joiner;
 
@@ -67,7 +65,7 @@ class Builder extends HookableBuilder
      *
      * @param  array|string $query
      * @param  array $columns
-     * @param  bool $fulltext
+     * @param  boolean $fulltext
      * @param  float $threshold
      * @return $this
      */
@@ -91,12 +89,34 @@ class Builder extends HookableBuilder
     }
 
     /**
+     * Filter the Query by Date Range on "Current Table" only
+     * abd return results (Developed By Tymk Softwares)
+     *
+     * @param  string $date_range (Format: `START_DATE - END_DATE`, where joiner '-' is very Important)
+     * @param  string $column
+     * @return $this
+     */
+    public function filterDate($date_range, $column = 'created_at')
+    {
+        if ($date_range) {
+            $dates = explode('-', $date_range);
+            $start_date = Carbon::parse(trim($dates[0]))->startOfDay();
+            $end_date = Carbon::parse(trim($dates[1]))->endOfDay();
+            $this->query->where([
+                [$this->model->getTable() . '.' . $column, '>=', $start_date],
+                [$this->model->getTable() . '.' . $column, '<=', $end_date]
+            ]);
+        }
+        return $this;
+    }
+
+    /**
      * Build the search subquery.
      *
      * @param  array $words
      * @param  array $mappings
      * @param  float $threshold
-     * @return SearchableSubquery
+     * @return \Sofa\Eloquence\Searchable\Subquery
      */
     protected function buildSubquery(array $words, array $mappings, $threshold)
     {
@@ -105,12 +125,12 @@ class Builder extends HookableBuilder
         $columns = $this->joinForSearch($mappings, $subquery);
 
         $threshold = (is_null($threshold))
-                        ? array_sum($columns->getWeights()) / 4
-                        : (float) $threshold;
+            ? array_sum($columns->getWeights()) / 4
+            : (float) $threshold;
 
         $subquery->select($this->model->getTable() . '.*')
-                 ->from($this->model->getTable())
-                 ->groupBy($this->model->getQualifiedKeyName());
+            ->from($this->model->getTable())
+            ->groupBy($this->model->getQualifiedKeyName());
 
         $this->addSearchClauses($subquery, $columns, $words, $threshold);
 
@@ -120,8 +140,8 @@ class Builder extends HookableBuilder
     /**
      * Add select and where clauses on the subquery.
      *
-     * @param SearchableSubquery $subquery
-     * @param ColumnCollection $columns
+     * @param  \Sofa\Eloquence\Searchable\Subquery $subquery
+     * @param  \Sofa\Eloquence\Searchable\ColumnCollection $columns
      * @param  array $words
      * @param  float $threshold
      * @return void
@@ -159,8 +179,8 @@ class Builder extends HookableBuilder
     /**
      * Apply relevance select on the subquery.
      *
-     * @param SearchableSubquery $subquery
-     * @param ColumnCollection $columns
+     * @param  \Sofa\Eloquence\Searchable\Subquery $subquery
+     * @param  \Sofa\Eloquence\Searchable\ColumnCollection $columns
      * @param  array $words
      * @return array
      */
@@ -186,8 +206,8 @@ class Builder extends HookableBuilder
     /**
      * Apply where clauses on the subquery.
      *
-     * @param SearchableSubquery $subquery
-     * @param ColumnCollection $columns
+     * @param  \Sofa\Eloquence\Searchable\Subquery $subquery
+     * @param  \Sofa\Eloquence\Searchable\ColumnCollection $columns
      * @param  array $words
      * @return void
      */
@@ -218,7 +238,7 @@ class Builder extends HookableBuilder
     /**
      * Move where clauses to subquery to improve performance.
      *
-     * @param SearchableSubquery $subquery
+     * @param  \Sofa\Eloquence\Searchable\Subquery $subquery
      * @return void
      */
     protected function wheresToSubquery(SearchableSubquery $subquery)
@@ -253,9 +273,9 @@ class Builder extends HookableBuilder
 
                 $this->query->addBinding($bindings, 'select');
 
-            // if where is not to be moved onto the subquery, let's increment
-            // binding key appropriately, so we can reliably move binding
-            // for the next where clauses in the loop that is running.
+                // if where is not to be moved onto the subquery, let's increment
+                // binding key appropriately, so we can reliably move binding
+                // for the next where clauses in the loop that is running.
             } else {
                 $bindingKey += $bindingsCount;
             }
@@ -267,7 +287,7 @@ class Builder extends HookableBuilder
      *
      * @param  array   $where
      * @param  string  $type
-     * @return int
+     * @return integer
      */
     protected function countBindings(array $where, $type)
     {
@@ -295,19 +315,19 @@ class Builder extends HookableBuilder
      *
      * @param  array  $where
      * @param  string $type
-     * @return bool
+     * @return boolean
      */
     protected function isHasWhere($where, $type)
     {
         return $type === 'basic'
-                && $where['column'] instanceof Expression
-                && $where['value'] instanceof Expression;
+            && $where['column'] instanceof Expression
+            && $where['value'] instanceof Expression;
     }
 
     /**
      * Build case clause from all words for a single column.
      *
-     * @param Column $column
+     * @param  \Sofa\Eloquence\Searchable\Column $column
      * @param  array  $words
      * @return array
      */
@@ -345,7 +365,7 @@ class Builder extends HookableBuilder
             foreach ($words as $key => $word) {
                 if ($this->isWildcard($word)) {
                     $wildcards[] = sprintf('%s %s ?', $column->getWrapped(), $operator);
-                    $bindings['select'][] = $bindings['where'][$key] = '%' . $this->caseBinding($word) . '%';
+                    $bindings['select'][] = $bindings['where'][$key] = '%'.$this->caseBinding($word) . '%';
                 }
             }
 
@@ -375,7 +395,7 @@ class Builder extends HookableBuilder
     /**
      * Build basic search case for 'equals' comparison.
      *
-     * @param Column $column
+     * @param  \Sofa\Eloquence\Searchable\Column $column
      * @param  array  $words
      * @return string
      */
@@ -392,22 +412,22 @@ class Builder extends HookableBuilder
      * Determine whether word ends with wildcard.
      *
      * @param  string  $word
-     * @return bool
+     * @return boolean
      */
     protected function isLeftMatching($word)
     {
-        return Str::endsWith($word, '*');
+        return \Str::endsWith($word, '*');
     }
 
     /**
      * Determine whether word starts and ends with wildcards.
      *
      * @param  string  $word
-     * @return bool
+     * @return boolean
      */
     protected function isWildcard($word)
     {
-        return Str::endsWith($word, '*') && Str::startsWith($word, '*');
+        return \Str::endsWith($word, '*') && \Str::startsWith($word, '*');
     }
 
     /**
@@ -430,8 +450,8 @@ class Builder extends HookableBuilder
      * Join related tables on the search subquery.
      *
      * @param  array $mappings
-     * @param SearchableSubquery $subquery
-     * @return ColumnCollection
+     * @param  \Sofa\Eloquence\Searchable\Subquery $subquery
+     * @return \Sofa\Eloquence\Searchable\ColumnCollection
      */
     protected function joinForSearch($mappings, $subquery)
     {
@@ -540,7 +560,7 @@ class Builder extends HookableBuilder
     /**
      * Set search query parser factory instance.
      *
-     * @param ParserFactory $factory
+     * @param \Sofa\Eloquence\Contracts\Searchable\ParserFactory $factory
      */
     public static function setParserFactory(ParserFactory $factory)
     {
@@ -550,7 +570,7 @@ class Builder extends HookableBuilder
     /**
      * Set the relations joiner factory instance.
      *
-     * @param JoinerFactory $factory
+     * @param \Sofa\Eloquence\Contracts\Relations\JoinerFactory $factory
      */
     public static function setJoinerFactory(JoinerFactory $factory)
     {

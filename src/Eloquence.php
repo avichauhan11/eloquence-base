@@ -2,11 +2,10 @@
 
 namespace Sofa\Eloquence;
 
+use Illuminate\Database\Connection;
 use Sofa\Hookable\Hookable;
-use Sofa\Eloquence\Mutator\Mutator;
 use Sofa\Hookable\Contracts\ArgumentBag;
 use Sofa\Eloquence\Query\Builder as QueryBuilder;
-use Sofa\Eloquence\Contracts\Mutator as MutatorContract;
 use Sofa\Eloquence\AttributeCleaner\Observer as AttributeCleaner;
 
 /**
@@ -16,21 +15,14 @@ use Sofa\Eloquence\AttributeCleaner\Observer as AttributeCleaner;
  * It also provides hasColumn and getColumnListing helper methods
  * so you can easily list or check columns in the model's table.
  *
- * @version 5.1
+ * @version 5.5
  *
- * @method \Illuminate\Database\Connection getConnection()
+ * @method Connection getConnection()
  * @method string getTable()
  */
 trait Eloquence
 {
     use Hookable;
-
-    /**
-     * Attribute mutator instance.
-     *
-     * @var \Sofa\Eloquence\Contracts\Mutator
-     */
-    protected static $attributeMutator;
 
     /**
      * Model's table column listing.
@@ -49,22 +41,14 @@ trait Eloquence
     public static function bootEloquence()
     {
         static::observe(new AttributeCleaner);
-
-        if (!isset(static::$attributeMutator)) {
-            if (function_exists('app') && app()->bound('eloquence.mutator')) {
-                static::setAttributeMutator(app('eloquence.mutator'));
-            } else {
-                static::setAttributeMutator(new Mutator);
-            }
-        }
     }
 
     /**
      * Determine whether where should be treated as whereNull.
      *
      * @param  string $method
-     * @param  Sofa\Hookable\Contracts\ArgumentBag $args
-     * @return boolean
+     * @param  ArgumentBag $args
+     * @return bool
      */
     protected function isWhereNull($method, ArgumentBag $args)
     {
@@ -74,8 +58,8 @@ trait Eloquence
     /**
      * Determine whether where is a whereNull by the arguments passed to where method.
      *
-     * @param  Sofa\Hookable\Contracts\ArgumentBag $args
-     * @return boolean
+     * @param  ArgumentBag $args
+     * @return bool
      */
     protected function isWhereNullByArgs(ArgumentBag $args)
     {
@@ -121,7 +105,7 @@ trait Eloquence
      * Determine whether the key is meta attribute or actual table field.
      *
      * @param  string  $key
-     * @return boolean
+     * @return bool
      */
     public static function hasColumn($key)
     {
@@ -171,8 +155,8 @@ trait Eloquence
     /**
      * Create new Eloquence query builder for the instance.
      *
-     * @param  \Sofa\Eloquence\Query\Builder
-     * @return \Sofa\Eloquence\Builder
+     * @param QueryBuilder $query
+     * @return Builder
      */
     public function newEloquentBuilder($query)
     {
@@ -182,7 +166,7 @@ trait Eloquence
     /**
      * Get a new query builder instance for the connection.
      *
-     * @return \Sofa\Eloquence\Query\Builder
+     * @return QueryBuilder
      */
     protected function newBaseQueryBuilder()
     {
@@ -191,30 +175,5 @@ trait Eloquence
         $grammar = $conn->getQueryGrammar();
 
         return new QueryBuilder($conn, $grammar, $conn->getPostProcessor());
-    }
-
-    /**
-     * Set attribute mutator instance.
-     *
-     * @codeCoverageIgnore
-     *
-     * @param  \Sofa\Eloquence\Contracts\Mutator $mutator
-     * @return void
-     */
-    public static function setAttributeMutator(MutatorContract $mutator)
-    {
-        static::$attributeMutator = $mutator;
-    }
-
-    /**
-     * Get attribute mutator instance.
-     *
-     * @codeCoverageIgnore
-     *
-     * @return \Sofa\Eloquence\Contracts\Mutator
-     */
-    public static function getAttributeMutator()
-    {
-        return static::$attributeMutator;
     }
 }

@@ -89,20 +89,18 @@ class Builder extends \Illuminate\Database\Query\Builder
     }
 
     /**
-     * Replace the "order by" clause of the current query.
+     * Run a pagination count query.
      *
-     * @param  string  $column
-     * @param  string  $direction
-     * @return \Illuminate\Database\Query\Builder|static
+     * @param  array  $columns
+     * @return array
      */
-    public function reOrderBy($column, $direction = 'asc')
+    protected function runPaginationCountQuery($columns = ['*'])
     {
-        $this->orders = null;
+        $bindings = $this->from instanceof Subquery ? ['order'] : ['select', 'order'];
 
-        if (! is_null($column)) {
-            return $this->orderBy($column, $direction);
-        }
-
-        return $this;
+        return $this->cloneWithout(['columns', 'orders', 'limit', 'offset'])
+                    ->cloneWithoutBindings($bindings)
+                    ->setAggregate('count', $this->withoutSelectAliases($columns))
+                    ->get()->all();
     }
 }

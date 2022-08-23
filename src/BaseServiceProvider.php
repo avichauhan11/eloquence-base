@@ -3,7 +3,6 @@
 namespace Sofa\Eloquence;
 
 use Sofa\Eloquence\Builder;
-use Sofa\Eloquence\Mutator\Mutator;
 use Sofa\Eloquence\Relations\JoinerFactory;
 use Sofa\Eloquence\Searchable\ParserFactory;
 use Illuminate\Support\ServiceProvider as BaseProvider;
@@ -11,7 +10,7 @@ use Illuminate\Support\ServiceProvider as BaseProvider;
 /**
  * @codeCoverageIgnore
  */
-class ServiceProvider extends BaseProvider
+class BaseServiceProvider extends BaseProvider
 {
     public function boot()
     {
@@ -27,23 +26,8 @@ class ServiceProvider extends BaseProvider
      */
     public function register()
     {
-        $this->registerMutator();
         $this->registerJoiner();
         $this->registerParser();
-    }
-
-    /**
-     * Register attribute mutator service.
-     *
-     * @return void
-     */
-    protected function registerMutator()
-    {
-        $this->app->singleton('eloquence.mutator', function () {
-            return new Mutator;
-        });
-
-        $this->app->alias('eloquence.mutator', 'Sofa\Eloquence\Contracts\Mutator');
     }
 
     /**
@@ -81,6 +65,6 @@ class ServiceProvider extends BaseProvider
      */
     public function provides()
     {
-        return ['eloquence.mutator', 'eloquence.joiner', 'eloquence.parser'];
+        return ['eloquence.joiner', 'eloquence.parser'];
     }
 }

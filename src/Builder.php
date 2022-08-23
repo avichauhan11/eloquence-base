@@ -2,8 +2,8 @@
 
 namespace Sofa\Eloquence;
 
-use Carbon\Carbon;
 use Sofa\Eloquence\Searchable\Column;
+use Carbon\Carbon;
 use Illuminate\Database\Query\Expression;
 use Sofa\Hookable\Builder as HookableBuilder;
 use Sofa\Eloquence\Searchable\ColumnCollection;
@@ -89,7 +89,7 @@ class Builder extends HookableBuilder
     }
 
     /**
-     * Filter the Query by Date Range on "Current Table" only 
+     * Filter the Query by Date Range on "Current Table" only
      * abd return results (Developed By Tymk Softwares)
      *
      * @param  string $date_range (Format: `START_DATE - END_DATE`, where joiner '-' is very Important)
@@ -99,18 +99,14 @@ class Builder extends HookableBuilder
     public function filterDate($date_range, $column = 'created_at')
     {
         if ($date_range) {
-
             $dates = explode('-', $date_range);
-            $start_date = Carbon::parse(trim($dates[0]));
+            $start_date = Carbon::parse(trim($dates[0]))->startOfDay();
             $end_date = Carbon::parse(trim($dates[1]))->endOfDay();
-
             $this->query->where([
                 [$this->model->getTable() . '.' . $column, '>=', $start_date],
                 [$this->model->getTable() . '.' . $column, '<=', $end_date]
             ]);
-
         }
-
         return $this;
     }
 
@@ -129,25 +125,12 @@ class Builder extends HookableBuilder
         $columns = $this->joinForSearch($mappings, $subquery);
 
         $threshold = (is_null($threshold))
-                        ? array_sum($columns->getWeights()) / 4
-                        : (float) $threshold;
-
-        $modelTableName = $this->model->getTable();
-
-        // If we are dealing with a SQL Server database, we need to group by all column names
-        if ($this->model->getConnection()->getDriverName() == 'sqlsrv') {
-            $groupByColumns = $this->model->getConnection()->getSchemaBuilder()->getColumnListing($modelTableName);
-            // Force column names to be fully-qualified
-            foreach ($groupByColumns as &$column) {
-                $column = $modelTableName . '.' . $column;
-            }
-        } else {
-            $groupByColumns = $this->model->getQualifiedKeyName();
-        }
+            ? array_sum($columns->getWeights()) / 4
+            : (float) $threshold;
 
         $subquery->select($this->model->getTable() . '.*')
-                 ->from($this->model->getTable())
-                 ->groupBy($groupByColumns);
+            ->from($this->model->getTable())
+            ->groupBy($this->model->getQualifiedKeyName());
 
         $this->addSearchClauses($subquery, $columns, $words, $threshold);
 
@@ -172,7 +155,9 @@ class Builder extends HookableBuilder
         $whereBindings = $this->searchSelect($subquery, $columns, $words, $threshold);
 
         // For morphOne/morphMany support we need to port the bindings from JoinClauses.
-        $joinBindings = array_flatten(array_pluck((array) $subquery->getQuery()->joins, 'bindings'));
+        $joinBindings = collect($subquery->getQuery()->joins)->flatMap(function ($join) {
+            return $join->getBindings();
+        })->all();
 
         $this->addBinding($joinBindings, 'select');
 
@@ -183,7 +168,7 @@ class Builder extends HookableBuilder
             $this->searchWhere($subquery, $columns, $words, $whereBindings);
         }
 
-        $this->query->where('relevance', '>=', new Expression($threshold));
+        $this->query->where('relevance', '>=', new Expression(number_format($threshold, 2)));
 
         $this->query->orders = array_merge(
             [['column' => 'relevance', 'direction' => 'desc']],
@@ -288,9 +273,9 @@ class Builder extends HookableBuilder
 
                 $this->query->addBinding($bindings, 'select');
 
-            // if where is not to be moved onto the subquery, let's increment
-            // binding key appropriately, so we can reliably move binding
-            // for the next where clauses in the loop that is running.
+                // if where is not to be moved onto the subquery, let's increment
+                // binding key appropriately, so we can reliably move binding
+                // for the next where clauses in the loop that is running.
             } else {
                 $bindingKey += $bindingsCount;
             }
@@ -335,8 +320,8 @@ class Builder extends HookableBuilder
     protected function isHasWhere($where, $type)
     {
         return $type === 'basic'
-                && $where['column'] instanceof Expression
-                && $where['value'] instanceof Expression;
+            && $where['column'] instanceof Expression
+            && $where['value'] instanceof Expression;
     }
 
     /**
@@ -431,7 +416,7 @@ class Builder extends HookableBuilder
      */
     protected function isLeftMatching($word)
     {
-        return ends_with($word, '*');
+        return \Str::endsWith($word, '*');
     }
 
     /**
@@ -442,7 +427,7 @@ class Builder extends HookableBuilder
      */
     protected function isWildcard($word)
     {
-        return ends_with($word, '*') && starts_with($word, '*');
+        return \Str::endsWith($word, '*') && \Str::startsWith($word, '*');
     }
 
     /**

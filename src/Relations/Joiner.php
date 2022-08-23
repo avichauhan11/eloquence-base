@@ -5,10 +5,13 @@ namespace Sofa\Eloquence\Relations;
 use LogicException;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\JoinClause as Join;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\MorphByMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -132,9 +135,15 @@ class Joiner implements JoinerContract
     {
         list($fk, $pk) = $this->getJoinKeys($relation);
 
-        $join = (new Join($type, $table))->on($fk, '=', $pk);
+        $join = (new Join($this->query, $type, $table))->on($fk, '=', $pk);
+
+        if (in_array(SoftDeletes::class, class_uses_recursive($relation->getRelated()))) {
+            $join->whereNull($relation->getRelated()->getQualifiedDeletedAtColumn());
+        }
 
         if ($relation instanceof MorphOneOrMany) {
+            $join->where($relation->getQualifiedMorphType(), '=', $parent->getMorphClass());
+        } elseif ($relation instanceof MorphToMany || $relation instanceof MorphByMany) {
             $join->where($relation->getMorphType(), '=', $parent->getMorphClass());
         }
 
@@ -153,15 +162,15 @@ class Joiner implements JoinerContract
     {
         if ($relation instanceof BelongsToMany) {
             $table = $relation->getTable();
-            $fk    = $relation->getForeignKey();
+            $fk = $relation->getQualifiedForeignPivotKeyName();
         } else {
             $table = $relation->getParent()->getTable();
-            $fk    = $table.'.'.$parent->getForeignKey();
+            $fk = $relation->getQualifiedFirstKeyName();
         }
 
         $pk = $parent->getQualifiedKeyName();
 
-        if (!$this->alreadyJoined($join = (new Join($type, $table))->on($fk, '=', $pk))) {
+        if (!$this->alreadyJoined($join = (new Join($this->query, $type, $table))->on($fk, '=', $pk))) {
             $this->query->joins[] = $join;
         }
     }
@@ -181,19 +190,19 @@ class Joiner implements JoinerContract
         }
 
         if ($relation instanceof HasOneOrMany) {
-            return [$relation->getForeignKey(), $relation->getQualifiedParentKeyName()];
+            return [$relation->getQualifiedForeignKeyName(), $relation->getQualifiedParentKeyName()];
         }
 
         if ($relation instanceof BelongsTo) {
-            return [$relation->getQualifiedForeignKey(), $relation->getQualifiedOtherKeyName()];
+            return [$relation->getQualifiedForeignKeyName(), $relation->getQualifiedOwnerKeyName()];
         }
 
         if ($relation instanceof BelongsToMany) {
-            return [$relation->getOtherKey(), $relation->getRelated()->getQualifiedKeyName()];
+            return [$relation->getQualifiedRelatedPivotKeyName(), $relation->getRelated()->getQualifiedKeyName()];
         }
 
         if ($relation instanceof HasManyThrough) {
-            $fk = $relation->getRelated()->getTable().'.'.$relation->getParent()->getForeignKey();
+            $fk = $relation->getQualifiedFarKeyName();
 
             return [$fk, $relation->getParent()->getQualifiedKeyName()];
         }

@@ -6,4 +6,5 @@ use Sofa\Eloquence\Subquery as BaseSubquery;
 
 class Subquery extends BaseSubquery
 {
+
 }

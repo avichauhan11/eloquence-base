@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @package Sofa\Eloquence
  * @author Jarek Tkaczyk <jare@softonsofa.com>
  */
 
@@ -13,7 +14,7 @@ if (!function_exists('rules_for_update')) {
      * @link  http://laravel.com/docs/5.0/validation#rule-unique
      *
      * @param  array $rules
-     * @param Model|int|string $id
+     * @param  \Illuminate\Database\Eloquent\Model|integer|string $id
      * @param  string $primaryKey
      * @return array
      */
@@ -36,7 +37,7 @@ if (!function_exists('rules_for_update')) {
                     return;
                 }
 
-                list(, $argsString) = explode(':', $rule);
+                list(,$argsString) = explode(':', $rule);
 
                 $args = explode(',', $argsString);
 
@@ -44,7 +45,7 @@ if (!function_exists('rules_for_update')) {
                 $args[2] = $id;
                 $args[3] = $primaryKey;
 
-                $rule = 'unique:' . implode(',', $args);
+                $rule = 'unique:'.implode(',', $args);
             });
         });
 

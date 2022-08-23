@@ -36,7 +36,7 @@ class ColumnCollection implements ArrayAccess, IteratorAggregate
     /**
      * Add column to the collection.
      *
-     * @param Column $column
+     * @param \Sofa\Eloquence\Searchable\Column $column
      */
     public function add(Column $column)
     {
@@ -99,7 +99,7 @@ class ColumnCollection implements ArrayAccess, IteratorAggregate
      * Check if element exists at given offset.
      *
      * @param  string  $key
-     * @return bool
+     * @return boolean
      */
     public function offsetExists($key)
     {
@@ -110,7 +110,7 @@ class ColumnCollection implements ArrayAccess, IteratorAggregate
      * Get element at given offset.
      *
      * @param  string $key
-     * @return Column
+     * @return \Sofa\Eloquence\Searchable\Column
      */
     public function offsetGet($key)
     {
@@ -121,7 +121,7 @@ class ColumnCollection implements ArrayAccess, IteratorAggregate
      * Set element at given offset.
      *
      * @param  string $key    [description]
-     * @param Column $column
+     * @param  \Sofa\Eloquence\Searchable\Column $column
      * @return void
      */
     public function offsetSet($key, $column)
@@ -133,7 +133,7 @@ class ColumnCollection implements ArrayAccess, IteratorAggregate
      * Unset element at given offset.
      *
      * @param  string $key
-     * @return Column
+     * @return \Sofa\Eloquence\Searchable\Column
      */
     public function offsetUnset($key)
     {
@@ -143,7 +143,7 @@ class ColumnCollection implements ArrayAccess, IteratorAggregate
     /**
      * Get an iterator for the columns.
      *
-     * @return ArrayIterator
+     * @return \ArrayIterator
      */
     public function getIterator()
     {

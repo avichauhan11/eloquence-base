@@ -4,9 +4,6 @@ namespace Sofa\Eloquence\Contracts;
 
 interface AttributeBag
 {
-    public function set($key, $value, $group = null);
-
+    public function set($key, $value);
     public function getValue($key);
-
-    public function getMetaByGroup($group);
 }

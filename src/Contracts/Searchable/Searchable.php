@@ -1,7 +1,8 @@
 <?php
 
-namespace Sofa\Eloquence\Contracts\Searchable;
+namespace Sofa\Eloquence\Searchable;
 
 interface Searchable
 {
+
 }

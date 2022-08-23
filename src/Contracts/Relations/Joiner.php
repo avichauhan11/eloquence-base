@@ -2,8 +2,6 @@
 
 namespace Sofa\Eloquence\Contracts\Relations;
 
-use Illuminate\Database\Eloquent\Model;
-
 interface Joiner
 {
     /**
@@ -11,7 +9,7 @@ interface Joiner
      *
      * @param  string $relations
      * @param  string $type
-     * @return Model
+     * @return \Illuminate\Database\Eloquent\Model
      */
     public function join($relations, $type = 'inner');
 }
